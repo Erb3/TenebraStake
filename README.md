@@ -28,6 +28,12 @@ Nothing!
 
 Nothing!
 
+## Technical limitations
+
+We use unsigned 32-bit integers, which means that you cannot submit more than 4 294 967 294 blocks.
+Say you submit a block every minute, then you can run for about 8166 years before reaching the integer limit.
+If you plan to run your tenebra staking node for more than 8166 years, without restart, consider using [TenebraStakeNode](https://github.com/PatriikPlays/tenebrastakenode/) by PatriikPlays.
+
 ## Todo
 
 - [x] Basic functioning

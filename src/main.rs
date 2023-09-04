@@ -22,7 +22,7 @@ struct WsUrlResponse {
 
 #[derive(Serialize)]
 struct EventSubscribeRequest {
-    id: u64,
+    id: u32,
     r#type: String,
     event: String
 }
@@ -62,7 +62,7 @@ fn main() {
     let socket = Arc::new(Mutex::new(socket));
     let socket_signals = Arc::clone(&socket);
     let socket_replies = Arc::clone(&socket);
-    let mut next_id: u64 = 1;
+    let mut next_id: u32 = 1;
 
     ctrlc::set_handler(move || {
         info!("Received SIGTERM, shutting down.");

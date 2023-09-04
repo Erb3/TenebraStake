@@ -9,7 +9,7 @@ use tungstenite::{Message, WebSocket};
 
 #[derive(Debug, Serialize)]
 struct BlockSubmit {
-    id: u64,
+    id: u32,
     r#type: String,
     nonce: String
 }
@@ -20,7 +20,7 @@ pub struct Block {
     value: u32
 }
 
-pub fn on_msg(data: Value, socket: Arc<Mutex<WebSocket<MaybeTlsStream<TcpStream>>>>, next_id: &mut u64) {
+pub fn on_msg(data: Value, socket: Arc<Mutex<WebSocket<MaybeTlsStream<TcpStream>>>>, next_id: &mut u32) {
     if data["id"].is_number() {
         info!("Received response for id {}: {:?}", data["id"], data)
     } else {
