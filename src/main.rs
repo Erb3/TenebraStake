@@ -1,9 +1,6 @@
-mod message_handler;
-mod staker;
-
 extern crate pretty_env_logger;
 #[macro_use] extern crate log;
-
+mod event_handler;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::process;
@@ -21,13 +18,6 @@ use tungstenite::protocol::frame::coding::CloseCode;
 struct WsUrlResponse {
     ok: bool,
     url: String,
-    expires: u32
-}
-
-#[derive(Deserialize)]
-struct LastBlockResponseContainer {
-    ok: bool,
-    block: message_handler::Block
 }
 
 #[derive(Serialize)]
@@ -40,19 +30,19 @@ struct EventSubscribeRequest {
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
 struct Cli {
-    #[arg(short, long)]
+    #[arg(short, long, env)]
     private_key: String,
 
-    #[arg(short, long)]
+    #[arg(short, long, env)]
     reconnect: bool,
 
-    #[arg(short, long)]
-    node: Option<String>
+    #[arg(short, long, env)]
+    sync_node: Option<String>
 }
 
 fn main() {
     let cli = Cli::parse();
-    let sync_node = cli.node.unwrap_or("https://tenebra.lil.gay".to_string());
+    let sync_node = cli.sync_node.unwrap_or("https://tenebra.lil.gay".to_string());
     let http_client = Client::new();
     pretty_env_logger::formatted_builder().filter_level(LevelFilter::Debug).init();
 
@@ -60,7 +50,7 @@ fn main() {
 
     let ws_url_data = get_ws_url(cli.private_key, sync_node.clone(), &http_client);
 
-    if ws_url_data.ok == false {
+    if !ws_url_data.ok {
         error!("Unable to fetch WebSocket URL");
         process::exit(1);
     }
@@ -72,6 +62,7 @@ fn main() {
     let socket = Arc::new(Mutex::new(socket));
     let socket_signals = Arc::clone(&socket);
     let socket_replies = Arc::clone(&socket);
+    let mut next_id: u64 = 1;
 
     ctrlc::set_handler(move || {
         info!("Received SIGTERM, shutting down.");
@@ -99,16 +90,13 @@ fn main() {
         Message::Text(serde_json::to_string(&subscribe_packet).unwrap())
     ).expect("Exception while sending subscription packet");
 
-    let mut current_hash = get_last_block(sync_node, &http_client);
-    debug!("Last (short)hash: {}", current_hash);
-
     loop {
         let msg = socket.lock().unwrap().read().expect("Error reading WebSocket message");
 
         match msg {
             Message::Close(close_frame) => {
 
-                if close_frame.clone().unwrap().reason == Cow::from("CTRL+C") {
+                if close_frame.clone().unwrap().reason == "CTRL+C" {
                     info!("WebSocket gracefully closed due to SIGTERM");
                 } else {
                     warn!("WebSocket abruptly closed. {:?}", close_frame);
@@ -118,7 +106,7 @@ fn main() {
             }
 
             Message::Text(txt) => {
-                message_handler::on_msg(serde_json::from_str(&txt).expect("Expect websocket message to be json"), &mut current_hash, socket_replies.clone());
+                event_handler::on_msg(serde_json::from_str(&txt).expect("Expect websocket message to be json"), socket_replies.clone(), &mut next_id);
             }
 
             _ => {}
@@ -131,12 +119,5 @@ fn get_ws_url(private_key: String, sync_node: String, http_client: &Client) -> W
     body.insert("privatekey".to_string(), private_key);
 
     let res = http_client.post(sync_node + "/ws/start").json(&body).send().expect("Expected sync node to be online");
-    res.json().unwrap()
-}
-
-fn get_last_block(sync_node: String, http_client: &Client) -> String {
-    let res = http_client.get(sync_node + "/blocks/last").send().expect("Expected to be able to get last block");
-    let data: LastBlockResponseContainer = res.json().expect("Expected last block to have JSON response");
-
-    data.block.short_hash
+    res.json().expect("Expected JSON response with websocket URL. Is the sync node correct?")
 }

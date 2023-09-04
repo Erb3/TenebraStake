@@ -4,15 +4,15 @@ A stake node for the "cryptocurrency" [tenebra](https://tenebra.lil.gay).
 
 ## Options
 
-| Option       | Description                                                             | Flag | Environment variable  | Default |
-|--------------|-------------------------------------------------------------------------|------|-----------------------|---------|
-| Private key  | The private-key to connect to tenebra with                              | `-p` | `TENEBRA_PRIVATE_KEY` | None    |
-| Reconnecting | Will reconnect if the websocket disconnects. Will late submit if needed | `-r` | `TENEBRA_RECONNECT`   | Enabled |
+| Option       | Description                                                             | Flag | Environment variable | Default                   |
+|--------------|-------------------------------------------------------------------------|------|----------------------|---------------------------|
+| Private key  | The private-key to connect to tenebra with                              | `-p` | `PRIVATE_KEY`        | None                      |
+| Reconnecting | Will reconnect if the websocket disconnects. Will late submit if needed | `-r` | `RECONNECT`          | Disabled                  |
+| Reconnecting | Will reconnect if the websocket disconnects. Will late submit if needed | `-s` | `SYNC_NODE`          | `https://tenebra.lil.gay` |
 
 ## How to use
 
 Download the binary, and run it with `TenebraStake -p [myPrivateKey]`.
-If you would like to have late-submitting enabled, also add the flag `-l`
 
 ## Requirements
 
@@ -33,3 +33,4 @@ Nothing!
 - [x] Basic functioning
 - [ ] Reconnect
 - [ ] Wait for keepalive packets
+- [ ] Prometheus export?
