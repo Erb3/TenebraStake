@@ -1073,12 +1073,10 @@ dependencies = [
 name = "tenebra-stake"
 version = "1.0.0"
 dependencies = [
- "base64",
  "clap",
  "ctrlc",
  "log",
  "pretty_env_logger",
- "rand",
  "reqwest",
  "serde",
  "serde_json",

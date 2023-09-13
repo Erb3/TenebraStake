@@ -49,6 +49,13 @@ If you plan to run your tenebra staking node for more than 8166 years, without r
 TenebraStake is versioned with my own proprietary versioning scheme known as `rewrite.major.minor`.
 In major updates, it may be breaking. It rewrites, it will be breaking. Patch releases will not be intentionally breaking!
 
+## FAQ
+
+**Can I run multiple stake nodes on the same wallet?**
+
+Answer: Yes, you can run multiple stake nodes. However, the only benefit to this, is that one will take over if one crashes (which should not happen).
+You do not get any financial gain.
+
 ## Todo
 
 - [x] Basic functioning
@@ -56,3 +63,5 @@ In major updates, it may be breaking. It rewrites, it will be breaking. Patch re
 - [ ] Wait for keepalive packets
 - [ ] Prometheus export?
 - [ ] Remove all stake on exit ( and add all stake on start )
+- [ ] Remove all stake if total network stake is above threshold
+- [ ] Detect stake getting disabled
