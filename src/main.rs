@@ -23,7 +23,8 @@ struct WsUrlResponse {
 #[derive(Serialize)]
 struct EventSubscribeRequest {
     id: u32,
-    r#type: String,
+    #[serde(rename = "type")]
+    event_type: String,
     event: String
 }
 
@@ -65,7 +66,7 @@ fn main() {
     let mut next_id: u32 = 1;
 
     ctrlc::set_handler(move || {
-        info!("Received SIGTERM, shutting down.");
+        info!("Received SIGTERM, shutting down. DUE TO A BUG, YOU MIGHT HAVE TO WAIT UP TO 60 SECONDS");
 
         let mut socket = socket_signals.lock().unwrap();
         debug!("Un-mutexed socket");
@@ -83,7 +84,7 @@ fn main() {
 
     let subscribe_packet = EventSubscribeRequest {
         id: 0,
-        r#type: "subscribe".to_string(),
+        event_type: "subscribe".to_string(),
         event: "ownValidators".to_string(),
     };
     socket.lock().unwrap().send(

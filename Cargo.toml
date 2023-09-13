@@ -16,7 +16,7 @@ categories = ["web-programming::websocket", "cryptography::cryptocurrencies"]
 clap = { version = "4.3.19", features = ["derive", "env"] }
 log = "0.4.19"
 pretty_env_logger = "0.5.0"
-reqwest = { version="0.11.18", features=["blocking", "json"] }
+reqwest = { version="0.11.18", default-features = false, features=["blocking", "json", "native-tls"] }
 serde = { version = "1.0.180", features=["derive"] }
 serde_json = "1.0.104"
 tungstenite = { version = "0.20.0", features = ["native-tls"] }
