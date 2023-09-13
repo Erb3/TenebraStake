@@ -7,7 +7,6 @@ A stake node for the "cryptocurrency" [tenebra](https://tenebra.lil.gay).
 | Option       | Description                                                                     | Flag | Environment variable | Default                   |
 |--------------|---------------------------------------------------------------------------------|------|----------------------|---------------------------|
 | Private key  | The private-key to connect to tenebra with                                      | `-p` | `PRIVATE_KEY`        | None                      |
-| Reconnecting | Will reconnect if the websocket disconnects. Will late submit if needed         | `-r` | `RECONNECT`          | Disabled                  |
 | Sync node    | The tenebra node to connect to. You will in most cases not need to change this. | `-s` | `SYNC_NODE`          | `https://tenebra.lil.gay` |
 
 ## How to use

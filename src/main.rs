@@ -1,18 +1,15 @@
-extern crate pretty_env_logger;
-#[macro_use] extern crate log;
-mod event_handler;
-use std::borrow::Cow;
-use std::collections::HashMap;
 use std::process;
-use std::sync::{Arc, Mutex};
-use serde::{Deserialize, Serialize};
-use reqwest::Url;
-use tungstenite::{connect, Message};
+use std::collections::HashMap;
 use clap::Parser;
-use log::LevelFilter;
-use reqwest::blocking::Client;
-use tungstenite::protocol::CloseFrame;
-use tungstenite::protocol::frame::coding::CloseCode;
+use futures_util::{future, pin_mut, SinkExt, StreamExt};
+use log::{debug, error, info, LevelFilter, warn};
+use reqwest::Client;
+use reqwest::Url;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use tokio::signal;
+use tokio_tungstenite::connect_async;
+use tokio_tungstenite::tungstenite::Message;
 
 #[derive(Deserialize)]
 struct WsUrlResponse {
@@ -25,7 +22,7 @@ struct EventSubscribeRequest {
     id: u32,
     #[serde(rename = "type")]
     event_type: String,
-    event: String
+    event: String,
 }
 
 #[derive(Parser, Debug)]
@@ -35,21 +32,48 @@ struct Cli {
     private_key: String,
 
     #[arg(short, long, env)]
-    reconnect: bool,
-
-    #[arg(short, long, env)]
-    sync_node: Option<String>
+    sync_node: Option<String>,
 }
 
-fn main() {
+#[derive(Debug, Serialize)]
+struct BlockSubmit {
+    id: u32,
+    #[serde(rename = "type")]
+    event_type: String,
+    nonce: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Block {
+    address: String,
+    value: u32,
+}
+
+#[derive(Deserialize)]
+struct StakeUpdatePacket {
+    active: bool,
+    #[serde(rename = "owner")]
+    address: String,
+    #[serde(rename = "stake")]
+    new_amount: u32,
+}
+
+#[tokio::main]
+async fn main() {
     let cli = Cli::parse();
     let sync_node = cli.sync_node.unwrap_or("https://tenebra.lil.gay".to_string());
     let http_client = Client::new();
     pretty_env_logger::formatted_builder().filter_level(LevelFilter::Debug).init();
 
-    info!("TenebraStake by Erb3. Reconnecting is {}", if cli.reconnect { "enabled" } else { "disabled" });
+    info!("TenebraStake maintained by Erb3. https://github.com/Erb3/TenebraStake");
 
-    let ws_url_data = get_ws_url(cli.private_key, sync_node.clone(), &http_client);
+    let submit_block = Message::Text(serde_json::to_string(&BlockSubmit {
+        id: 69420,
+        event_type: "submit_block".to_string(),
+        nonce: "erb3tenebrastake".to_string(), // Tenebra :skull:
+    }).unwrap());
+
+    let ws_url_data = get_ws_url(cli.private_key, sync_node.clone(), &http_client).await;
 
     if !ws_url_data.ok {
         error!("Unable to fetch WebSocket URL");
@@ -57,28 +81,12 @@ fn main() {
     }
 
     info!("WS Url: {}", ws_url_data.url);
-    let (socket, _) =
-        connect(Url::parse(&ws_url_data.url).unwrap()).expect("Unable to connect to WebSocket");
-
-    let socket = Arc::new(Mutex::new(socket));
-    let socket_signals = Arc::clone(&socket);
-    let socket_replies = Arc::clone(&socket);
-    let mut next_id: u32 = 1;
-
-    ctrlc::set_handler(move || {
-        info!("Received SIGTERM, shutting down. DUE TO A BUG, YOU MIGHT HAVE TO WAIT UP TO 60 SECONDS");
-
-        let mut socket = socket_signals.lock().unwrap();
-        debug!("Un-mutexed socket");
-
-        let close_frame = CloseFrame {
-            code: CloseCode::Normal,
-            reason: Cow::from("CTRL+C")
-        };
-
-        socket.write(Message::Close(Some(close_frame))).expect("Expected to be able to close websocket lol");
-        debug!("Sent close packet");
-    }).expect("Exception while setting CTRL + C handler");
+    let (mut ws_stream, _) =
+        connect_async(Url::parse(&ws_url_data.url).unwrap())
+            .await.expect("Failed to establish connection with host WebSocket");
+    let (ws_write, ws_read) = ws_stream.split();
+    let (mut tx, rx) = futures_channel::mpsc::unbounded();
+    let to_ws = rx.map(Ok).forward(ws_write);
 
     info!("Connected to WebSocket server");
 
@@ -87,38 +95,97 @@ fn main() {
         event_type: "subscribe".to_string(),
         event: "ownValidators".to_string(),
     };
-    socket.lock().unwrap().send(
+    tx.unbounded_send(
         Message::Text(serde_json::to_string(&subscribe_packet).unwrap())
     ).expect("Exception while sending subscription packet");
 
-    loop {
-        let msg = socket.lock().unwrap().read().expect("Error reading WebSocket message");
+    tokio::spawn(
+        async move {
+            let from_ws = {
+                ws_read.for_each(|message| async {
+                    match message.unwrap() {
+                        Message::Close(close_frame) => {
+                            if close_frame.clone().unwrap().reason == "CTRL+C" {
+                                info!("WebSocket gracefully closed due to SIGINT");
+                            } else {
+                                warn!("WebSocket abruptly closed. {:?}", close_frame);
+                            }
 
-        match msg {
-            Message::Close(close_frame) => {
+                            process::exit(0);
+                        }
 
-                if close_frame.clone().unwrap().reason == "CTRL+C" {
-                    info!("WebSocket gracefully closed due to SIGTERM");
-                } else {
-                    warn!("WebSocket abruptly closed. {:?}", close_frame);
-                }
+                        Message::Text(txt) => {
+                            let data: Value = serde_json::from_str(&txt).expect("Expect websocket message to be json");
 
-                process::exit(0);
-            }
+                            if data["id"].is_number() {
+                                info!("Ignoring response for id {}: {:?}", data["id"], data)
+                            } else {
+                                match data["type"].as_str().unwrap() {
+                                    "keepalive" => {}
 
-            Message::Text(txt) => {
-                event_handler::on_msg(serde_json::from_str(&txt).expect("Expect websocket message to be json"), socket_replies.clone(), &mut next_id);
-            }
+                                    "hello" => {
+                                        info!("Tenebra server says hello 👋 {:?}", data);
+                                    }
 
-            _ => {}
+                                    "event" => {
+                                        match data["event"].as_str().unwrap() {
+                                            "transaction" => {}
+
+                                            "block" => {
+                                                let block: Block = serde_json::from_str(&data["block"].to_string()).unwrap();
+                                                info!("{} just earned t{} from staking.", block.address, block.value);
+                                            }
+
+                                            "stake" => {
+                                                let stake: StakeUpdatePacket = serde_json::from_str(&data["stake"].to_string()).unwrap();
+                                                info!("{} just updated their {}stake to {}", stake.address, if stake.active {""} else {"inactive "}, stake.new_amount)
+                                            }
+
+                                            "validator" => {
+                                                debug!("Staking packet {:?}", data);
+
+                                                let to_submit = submit_block.clone();
+                                                info!("Submitting block {:?}", to_submit);
+                                                tx.unbounded_send(to_submit).expect("Exception while submitting block");
+                                            }
+
+                                            _ => {
+                                                warn!("Unexpected event {:?}", data);
+                                            }
+                                        }
+                                    }
+                                    _ => {
+                                        warn!("Unrecognized packet! {}", data);
+                                    }
+                                }
+                            }
+                        }
+
+                        _ => {}
+                    }
+                })
+            };
+
+            pin_mut!(to_ws, from_ws);
+            future::select(to_ws, from_ws).await;
         }
+    );
+
+    match signal::ctrl_c().await {
+        Ok(()) => {
+            info!("Received SIGTERM, exiting!");
+            process::exit(0);
+        },
+        Err(err) => {
+            panic!("Unable to listen for shutdown signal: {}", err);
+        },
     }
 }
 
-fn get_ws_url(private_key: String, sync_node: String, http_client: &Client) -> WsUrlResponse {
+async fn get_ws_url(private_key: String, sync_node: String, http_client: &Client) -> WsUrlResponse {
     let mut body: HashMap<String, String> = HashMap::new();
     body.insert("privatekey".to_string(), private_key);
 
-    let res = http_client.post(sync_node + "/ws/start").json(&body).send().expect("Expected sync node to be online");
-    res.json().expect("Expected JSON response with websocket URL. Is the sync node correct?")
+    let res = http_client.post(sync_node + "/ws/start").json(&body).send().await.expect("Expected sync node to be online");
+    res.json().await.expect("Expected JSON response with websocket URL. Is the sync node correct?")
 }
