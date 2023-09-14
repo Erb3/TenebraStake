@@ -1,12 +1,10 @@
-use std::process;
-use std::collections::HashMap;
+use std::{process, collections::HashMap};
 use clap::Parser;
-use futures_util::{future, pin_mut, SinkExt, StreamExt};
 use log::{debug, error, info, LevelFilter, warn};
-use reqwest::Client;
-use reqwest::Url;
+use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use futures_util::{future, pin_mut, StreamExt};
 use tokio::signal;
 use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::Message;
@@ -81,11 +79,11 @@ async fn main() {
     }
 
     info!("WS Url: {}", ws_url_data.url);
-    let (mut ws_stream, _) =
+    let (ws_stream, _) =
         connect_async(Url::parse(&ws_url_data.url).unwrap())
             .await.expect("Failed to establish connection with host WebSocket");
     let (ws_write, ws_read) = ws_stream.split();
-    let (mut tx, rx) = futures_channel::mpsc::unbounded();
+    let (tx, rx) = futures_channel::mpsc::unbounded();
     let to_ws = rx.map(Ok).forward(ws_write);
 
     info!("Connected to WebSocket server");
@@ -103,14 +101,9 @@ async fn main() {
         async move {
             let from_ws = {
                 ws_read.for_each(|message| async {
-                    match message.unwrap() {
-                        Message::Close(close_frame) => {
-                            if close_frame.clone().unwrap().reason == "CTRL+C" {
-                                info!("WebSocket gracefully closed due to SIGINT");
-                            } else {
-                                warn!("WebSocket abruptly closed. {:?}", close_frame);
-                            }
-
+                    match message.unwrap_or(Message::Close(None)) {
+                        Message::Close(v) => {
+                            error!("Websocket closed!");
                             process::exit(0);
                         }
 
