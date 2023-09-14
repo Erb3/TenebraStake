@@ -13,9 +13,24 @@ A stake node for the "cryptocurrency" [tenebra](https://tenebra.lil.gay).
 
 Download the binary, and run it with `TenebraStake -p [myPrivateKey]`.
 
-### Docker
+### Docker run
 
-Docker images are automatically published to GitHub Packages.
+Run the following command to start the stake node with `docker run`. Replace `abc123` with your private key:
+```shell
+docker run -d -e PRIVATE_KEY=abc123 ghcr.io/erb3/tenebrastake:latest
+```
+
+### Docker compose
+
+To run with Docker compose, add this to your `docker-compose.yml`. Replace `abc123` with your private key:
+```yml
+tenebrastake:
+  image: ghcr.io/erb3/tenebrastake:latest
+  container_name: tenebrastake
+  restart: unless-stopped
+  environment:
+    - PRIVATE_KEY=abc123
+```
 
 ## Requirements
 
