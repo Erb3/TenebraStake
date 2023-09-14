@@ -102,7 +102,7 @@ async fn main() {
             let from_ws = {
                 ws_read.for_each(|message| async {
                     match message.unwrap_or(Message::Close(None)) {
-                        Message::Close(v) => {
+                        Message::Close(_v) => {
                             error!("Websocket closed!");
                             process::exit(0);
                         }

@@ -1,4 +1,4 @@
-FROM rust:1.71-slim AS build
+FROM rust:1.71-slim-buster AS build
 WORKDIR /src
 COPY . .
 RUN apt update && apt install -y libssl-dev pkg-config ca-certificates
