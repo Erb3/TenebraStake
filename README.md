@@ -1,5 +1,8 @@
 # TenebraStake
 
+[![github](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/github_vector.svg)](https://github.com/Erb3/tenebrastake)
+![risugamis-modloader](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/unsupported/risugamis-modloader_vector.svg)
+
 A stake node for the "cryptocurrency" [tenebra](https://tenebra.lil.gay).
 
 ## Options
@@ -38,13 +41,14 @@ The websocket and HTTPS parts of TenebraStake use native TLS. If you are doing s
 
 ### Linux
 
-OpenSSL 1.0.1, 1.0.2, 1.1.0, or 1.1.1 with headers
+OpenSSL 1.0.1, 1.0.2, 1.1.0, or 1.1.1 with headers (see [rust-openssl](https://github.com/sfackler/rust-openssl)).
 
 ## Technical limitations
 
 We use unsigned 32-bit integers, which means that you cannot submit more than 4 294 967 294 blocks.
 Say you submit a block every minute, then you can run for about 8166 years before reaching the integer limit.
-If you plan to run your tenebra staking node for more than 8166 years, without restart, consider checking out [alternatives](#alternatives).
+If you plan to run your tenebra staking node for more than 8166 years without restarting,
+consider checking out [alternatives](#alternatives).
 
 ## Versioning
 
@@ -53,27 +57,30 @@ In major updates, it may be breaking. It rewrites, it will be breaking. Patch re
 
 ## FAQ
 
-**Can I run multiple stake nodes on the same wallet?**
+**Can I run multiple stake nodes with the same wallet?**
 
-Answer: Yes, you can run multiple stake nodes. However, the only benefit to this, is that one will take over if one crashes (which should not happen).
+Answer: Yes, you can run multiple stake nodes.
+However, the only benefit to this is that one will take over if one crashes (which should not happen).
 You do not get any financial gain.
 
 **Does it automatically reconnect?**
 
-TenebraStake does may in some cases reconnect, such as if you lost internet connectivity for a small amount of time.
-TenebraStake is meant to be run on servers, so it may not always crash if you loose internet connectivity.
+TenebraStake may in some cases reconnect, such as if you lost internet connectivity for a small amount of time.
+However, TenebraStake is meant to be run on servers, so it is meant to crash when weird things happen.
+If you want it to restart once it crashed, consider using docker with restarting enabled.
 
 ## Todo
 
-- [ ] Wait for keepalive packets
-- [ ] Prometheus export?
-- [ ] Remove all stake on exit ( and add all stake on start )
-- [ ] Remove all stake if total network stake is above threshold
+- [ ] Wait for keep-alive packets
+- [ ] Prometheus export
+- [ ] Remove all stakes on exit (and add all stakes on start)
+- [ ] Remove all stakes if the total network stake is above a set threshold
 - [ ] Detect stake getting disabled
 
 ## Alternatives
 
 Don't like TenebraStake? 😥. If it was our fault, please make a GitHub issue! Alternatives we like:
 
-* [TenebraStakeNode](https://github.com/PatriikPlays/tenebrastakenode/) by PatriikPlays.
-* [TenebraStakingNode](https://github.com/Allymonies/TenebraStakingNode) by Allymonies
+1. [TenebraStakeNode](https://github.com/PatriikPlays/tenebrastakenode/) by PatriikPlays
+2. [TenebraValidator](https://github.com/xAnavrins/TenebraValidator) by Anavrins
+3. [TenebraStakingNode](https://github.com/Allymonies/TenebraStakingNode) by Allymonies
