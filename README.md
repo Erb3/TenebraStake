@@ -43,13 +43,6 @@ The websocket and HTTPS parts of TenebraStake use native TLS. If you are doing s
 
 OpenSSL 1.0.1, 1.0.2, 1.1.0, or 1.1.1 with headers (see [rust-openssl](https://github.com/sfackler/rust-openssl)).
 
-## Technical limitations
-
-We use unsigned 32-bit integers, which means that you cannot submit more than 4 294 967 294 blocks.
-Say you submit a block every minute, then you can run for about 8166 years before reaching the integer limit.
-If you plan to run your tenebra staking node for more than 8166 years without restarting,
-consider checking out [alternatives](#alternatives).
-
 ## Versioning
 
 TenebraStake is versioned with my own proprietary versioning scheme known as `rewrite.major.minor`.
@@ -83,4 +76,5 @@ Don't like TenebraStake? 😥. If it was our fault, please make a GitHub issue! 
 
 1. [TenebraStakeNode](https://github.com/PatriikPlays/tenebrastakenode/) by PatriikPlays
 2. [TenebraValidator](https://github.com/xAnavrins/TenebraValidator) by Anavrins
-3. [TenebraStakingNode](https://github.com/Allymonies/TenebraStakingNode) by Allymonies
+3. [tenebra.lua](https://gist.github.com/Ale32bit/2978fd3962506a8a943fbcf115084b6b) by AlexDevs
+4. [TenebraStakingNode](https://github.com/Allymonies/TenebraStakingNode) by Allymonies
