@@ -13,7 +13,7 @@ keywords = ["tenebra", "tenebrastake", "stakenode"]
 categories = ["web-programming::websocket", "cryptography::cryptocurrencies"]
 
 [dependencies]
-clap = { version = "4.4.3", features = ["derive", "env"] }
+clap = { version = "4.4.7", features = ["derive", "env"] }
 log = "0.4.19"
 pretty_env_logger = "0.5.0"
 reqwest = { version="0.11.18", default-features = false, features=["json", "native-tls"] }
