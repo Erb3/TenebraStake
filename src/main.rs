@@ -67,7 +67,7 @@ async fn main() {
         .filter_level(LevelFilter::Debug)
         .init();
 
-    info!("TenebraStake maintained by Erb3. https://github.com/Erb3/TenebraStake");
+    info!("TenebraStake made by Erb3. https://github.com/Erb3/TenebraStake");
 
     let submit_block = Message::Text(
         serde_json::to_string(&BlockSubmit {

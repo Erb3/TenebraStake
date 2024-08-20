@@ -1,5 +1,8 @@
 # TenebraStake
 
+> [!IMPORTANT]
+> TenebraStake is archived as of August 20th, and will not receive any updates.
+
 [![github](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/github_vector.svg)](https://github.com/Erb3/tenebrastake)
 ![risugamis-modloader](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/unsupported/risugamis-modloader_vector.svg)
 
