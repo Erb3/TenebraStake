@@ -7,10 +7,10 @@ A stake node for the "cryptocurrency" [tenebra](https://tenebra.lil.gay).
 
 ## Options
 
-| Option       | Description                                                                     | Flag | Environment variable | Default                   |
-|--------------|---------------------------------------------------------------------------------|------|----------------------|---------------------------|
-| Private key  | The private-key to connect to tenebra with                                      | `-p` | `PRIVATE_KEY`        | None                      |
-| Sync node    | The tenebra node to connect to. You will in most cases not need to change this. | `-s` | `SYNC_NODE`          | `https://tenebra.lil.gay` |
+| Option      | Description                                                                     | Flag | Environment variable | Default                   |
+| ----------- | ------------------------------------------------------------------------------- | ---- | -------------------- | ------------------------- |
+| Private key | The private-key to connect to tenebra with                                      | `-p` | `PRIVATE_KEY`        | None                      |
+| Sync node   | The tenebra node to connect to. You will in most cases not need to change this. | `-s` | `SYNC_NODE`          | `https://tenebra.lil.gay` |
 
 ## How to use
 
@@ -19,6 +19,7 @@ Download the binary, and run it with `TenebraStake -p [myPrivateKey]`.
 ### Docker run
 
 Run the following command to start the stake node with `docker run`. Replace `abc123` with your private key:
+
 ```shell
 docker run -d -e PRIVATE_KEY=abc123 ghcr.io/erb3/tenebrastake:latest
 ```
@@ -26,13 +27,14 @@ docker run -d -e PRIVATE_KEY=abc123 ghcr.io/erb3/tenebrastake:latest
 ### Docker compose
 
 To run with Docker compose, add this to your `docker-compose.yml`. Replace `abc123` with your private key:
+
 ```yml
 tenebrastake:
-  image: ghcr.io/erb3/tenebrastake:latest
-  container_name: tenebrastake
-  restart: unless-stopped
-  environment:
-    - PRIVATE_KEY=abc123
+ image: ghcr.io/erb3/tenebrastake:latest
+ container_name: tenebrastake
+ restart: unless-stopped
+ environment:
+  - PRIVATE_KEY=abc123
 ```
 
 ## Requirements
